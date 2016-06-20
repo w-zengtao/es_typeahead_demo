@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :users
   resources :articles do
     collection do
       get 'typeahead'

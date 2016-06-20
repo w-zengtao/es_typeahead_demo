@@ -1,13 +1,25 @@
 class Article < ApplicationRecord
 
   include Elasticsearch::Model
+  include Elasticsearch::Model::Callbacks
+
   index_name 'typeahead_es_demo'
+  document_type 'ztao_typeahead'
 
   settings index: { number_of_shards: 1, number_of_replicas: 0 } do
     mapping do
-      indexes :title, analyzer: "snowball"
-      indexes :remark, analyzer: "snowball"
+      indexes :id, type: 'string', index: "not_analyzed", analyzer: 'snowball'
+      indexes :title, type: 'string', analyzer: 'snowball'
+      indexes :remark, type: 'string', analyzer: 'snowball'
+      indexes :suggest, type: 'completion', analyzer: 'snowball'
     end
+  end
+
+  def as_indexed_json(options = {})
+    {
+      title: self.title.to_s.strip,
+      remark: self.remark.to_s.strip
+    }
   end
 
   def self.search(query)
@@ -35,11 +47,11 @@ class Article < ApplicationRecord
 
 
   class << self
-
     def reset_es_data
       Article.__elasticsearch__.client.indices.delete index: Article.index_name if Article.__elasticsearch__.client.indices.exists? index: Article.index_name
       Article.__elasticsearch__.client.indices.create index: Article.index_name
       Article.find_each do |a|
+        puts a.id
         a.__elasticsearch__.index_document
       end
     end
@@ -63,6 +75,7 @@ class Article < ApplicationRecord
           'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
       ].to_a
     end
+
     def random_title
       @origin_data ||= origin_data
       @origin_data.shuffle.last(3).join(' ')

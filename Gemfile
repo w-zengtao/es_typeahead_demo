@@ -26,9 +26,13 @@ gem 'elasticsearch-rails', git: 'git://github.com/elasticsearch/elasticsearch-ra
 # elasticsearch searchkick
 gem 'searchkick'
 
+# Likeable
+gem 'acts_as_follower', git: 'git://github.com/w-zengtao/acts_as_follower.git'
+
 group :development, :test do
   gem 'pry'
   gem 'byebug', platform: :mri
+  gem 'awesome_print'
 end
 
 group :development do

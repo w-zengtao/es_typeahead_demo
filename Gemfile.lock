@@ -9,6 +9,12 @@ GIT
     elasticsearch-rails (0.1.9)
 
 GIT
+  remote: git://github.com/w-zengtao/acts_as_follower.git
+  revision: a04dfa0574d6f6d3306658470ce146ef1fe2de32
+  specs:
+    acts_as_follower (0.2.1)
+
+GIT
   remote: git://github.com/yourabi/twitter-typeahead-rails.git
   revision: fc343ac2f026589117bad0b7234c8bc69ef8bd6a
   specs:
@@ -58,6 +64,7 @@ GEM
       minitest (~> 5.1)
       tzinfo (~> 1.1)
     arel (7.0.0)
+    awesome_print (1.7.0)
     builder (3.2.2)
     byebug (9.0.5)
     coderay (1.1.1)
@@ -200,6 +207,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  acts_as_follower!
+  awesome_print
   bundler (>= 1.12.5)
   byebug
   coffee-rails (~> 4.1.0)
