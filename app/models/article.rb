@@ -1,5 +1,8 @@
 class Article < ApplicationRecord
 
+  # 文章可以被关注
+  # acts_as_followable
+
   include Elasticsearch::Model
   include Elasticsearch::Model::Callbacks
 
