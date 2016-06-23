@@ -27,7 +27,6 @@ gem 'elasticsearch-rails', git: 'git://github.com/elasticsearch/elasticsearch-ra
 gem 'searchkick'
 
 # Likeable
-# gem 'acts_as_follower', git: 'git://github.com/w-zengtao/acts_as_follower.git'
 gem 'acts_as_followable', git: 'git://github.com/w-zengtao/acts_as_followable.git'
 
 group :development, :test do

@@ -1,7 +1,7 @@
 class Article < ApplicationRecord
 
   # 文章可以被关注
-  # acts_as_followable
+  acts_as_followable
 
   include Elasticsearch::Model
   include Elasticsearch::Model::Callbacks
@@ -50,11 +50,11 @@ class Article < ApplicationRecord
 
 
   class << self
+
     def reset_es_data
       Article.__elasticsearch__.client.indices.delete index: Article.index_name if Article.__elasticsearch__.client.indices.exists? index: Article.index_name
       Article.__elasticsearch__.client.indices.create index: Article.index_name
       Article.find_each do |a|
-        puts a.id
         a.__elasticsearch__.index_document
       end
     end
