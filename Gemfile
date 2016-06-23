@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rails', '>= 5.0.0.rc1', '< 5.1'
 gem 'bundler', '>= 1.12.5'
+gem 'mysql2'
 gem 'sqlite3'
 gem 'puma', '~> 3.0'
 

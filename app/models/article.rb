@@ -26,31 +26,30 @@ class Article < ApplicationRecord
   end
 
   def self.search(query)
-      __elasticsearch__.search(
-        {
-          query: {
-            multi_match: {
-              query: query,
-              fields: ['title', 'remark^2'],
-              type: 'phrase'
-            }
-          },
-          size: 20,
-          highlight: {
-            pre_tags: ['<em class="label label-highlight">'],
-            post_tags: ['</em>'],
-            fields: {
-              title:   { number_of_fragments: 0 },
-              content: { fragment_size: 25 }
-            }
+    __elasticsearch__.search(
+      {
+        query: {
+          multi_match: {
+            query: query,
+            fields: ['title', 'remark^2'],
+            type: 'phrase'
+          }
+        },
+        size: 20,
+        highlight: {
+          pre_tags: ['<em class="label label-highlight">'],
+          post_tags: ['</em>'],
+          fields: {
+            title:   { number_of_fragments: 0 },
+            content: { fragment_size: 25 }
           }
         }
-      )
-    end
+      }
+    )
+  end
 
 
   class << self
-
     def reset_es_data
       Article.__elasticsearch__.client.indices.delete index: Article.index_name if Article.__elasticsearch__.client.indices.exists? index: Article.index_name
       Article.__elasticsearch__.client.indices.create index: Article.index_name
