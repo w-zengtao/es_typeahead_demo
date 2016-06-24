@@ -26,14 +26,13 @@ class Chemical < ApplicationRecord
   settings index: { number_of_shards: 1, number_of_replicas: 0 } do
     mapping do
       indexes :cas, type: 'string', index: "not_analyzed", analyzer: 'snowball'
-      indexes :name, type: 'string', analyzer: 'snowball'
-      indexes :alias_name, type: 'string', analyzer: 'snowball'
-
-      indexes :name_cn, type: 'string', analyzer: 'ik_smart'
-      indexes :alias_name_cn, type: 'string', analyzer: 'ik_smart'
+      # indexes :name, type: 'string', analyzer: 'snowball'
+      # indexes :alias_name, type: 'string', analyzer: 'snowball'
+      #
+      # indexes :name_cn, type: 'string', analyzer: 'ik_smart'
+      # indexes :alias_name_cn, type: 'string', analyzer: 'ik_smart'
 
       indexes :status, type: 'integer'
-
       indexes :names, type: 'string', analyzer: 'snowball'
       indexes :suggest, type: 'completion', analyzer: 'snowball'
     end
@@ -43,6 +42,7 @@ class Chemical < ApplicationRecord
     {
       cas: self.cas.to_s.strip,
       name: self.name.to_s.strip,
+      names: self.suggests,
       alias_name: self.name.to_s.strip,
       status: self.status.to_i,
       suggest: {
@@ -77,10 +77,13 @@ class Chemical < ApplicationRecord
     __elasticsearch__.search(
       {
         query: {
-          multi_match: {
-            query: query,
-            fields: ['title', 'remark^2'],
-            type: 'phrase'
+          # multi_match: {
+          #   query: query,
+          #   fields: ['title', 'remark^2'],
+          #   type: 'phrase'
+          # }
+          function_score: {
+            query: query
           }
         },
         min_score: 0.20,
@@ -96,6 +99,15 @@ class Chemical < ApplicationRecord
         }
       }
     )
+  end
+
+  def self.remove_es_data
+    Chemical.__elasticsearch__.client.indices.delete index: Chemical.index_name
+  end
+
+  def self.rebuild_es_data
+    Chemical.__elasticsearch__.client.indices.create index: Chemical.index_name
+    Chemical.import
   end
 
   # ----------- Connect Database Part -------------
