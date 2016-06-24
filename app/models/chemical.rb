@@ -1,5 +1,8 @@
 class Chemical < ApplicationRecord
 
+  INVALID_UTF8_REGEX = /[\u0000-\u0019]|\u200b/
+  WHITESPACE_REGEXP = /\u001f/
+
   # ----------- Connect Database Part -------------
   establish_connection(
     adapter: "mysql2",
@@ -25,26 +28,50 @@ class Chemical < ApplicationRecord
       indexes :cas, type: 'string', index: "not_analyzed", analyzer: 'snowball'
       indexes :name, type: 'string', analyzer: 'snowball'
       indexes :alias_name, type: 'string', analyzer: 'snowball'
+
       indexes :name_cn, type: 'string', analyzer: 'ik_smart'
       indexes :alias_name_cn, type: 'string', analyzer: 'ik_smart'
 
+      indexes :status, type: 'integer'
+
+      indexes :names, type: 'string', analyzer: 'snowball'
       indexes :suggest, type: 'completion', analyzer: 'snowball'
     end
   end
 
   def as_indexed_json(options = {})
     {
-      cas: self.title.to_s.strip,
-      remark: self.remark.to_s.strip
+      cas: self.cas.to_s.strip,
+      name: self.name.to_s.strip,
+      alias_name: self.name.to_s.strip,
+      status: self.status.to_i,
+      suggest: {
+        input: self.suggests
+      }
     }
+  end
+
+  # ES的Suggest功能
+  def self.es_suggest(term)
+    Chemical.__elasticsearch__.client.suggest(index: Chemical.index_name, body: {
+      suggests: {
+        text: term,
+        completion: {
+          field: 'suggest', size: 10
+        }
+      }
+    })
   end
 
   def self.search(q, page = 1, page_size = 20)
     query = {
       bool: {
         must: [
-          { term: { } }
+          { term: { status: {value: 0} } }
         ],
+        should: [
+          { match: { names: q }}
+        ]
       }
     }
     __elasticsearch__.search(
@@ -72,4 +99,14 @@ class Chemical < ApplicationRecord
   end
 
   # ----------- Connect Database Part -------------
+  def suggests
+    s = []
+    s << self.cas
+    s << self.name.to_s.downcase.gsub(INVALID_UTF8_REGEX,'').gsub(WHITESPACE_REGEXP,' ').scan(/[a-z]+/).find_all{|i| i.size >= 2}.uniq
+    s << self.alias_name.to_s.downcase.gsub(INVALID_UTF8_REGEX,'').gsub(WHITESPACE_REGEXP,' ').scan(/[a-z]+/).find_all{|i| i.size >= 2}.uniq
+    s.flatten!
+    s.map! {|n| n.to_s.strip.downcase}
+    s.select! {|n| n.present?}
+    s.uniq
+  end
 end
