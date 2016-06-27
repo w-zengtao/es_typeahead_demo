@@ -34,7 +34,7 @@ class Chemical < ApplicationRecord
 
       indexes :status, type: 'integer'
       indexes :names, type: 'string', analyzer: 'snowball'
-      indexes :suggest, type: 'completion', analyzer: 'snowball'
+      indexes :suggest_en, type: 'completion', analyzer: 'snowball', payloads: true
     end
   end
 
@@ -45,22 +45,25 @@ class Chemical < ApplicationRecord
       names: self.suggests,
       alias_name: self.name.to_s.strip,
       status: self.status.to_i,
-      suggest: {
+      suggest_en: {
         input: self.suggests
       }
-    }
+    }.as_json
   end
 
   # ES的Suggest功能
-  def self.es_suggest(term)
-    Chemical.__elasticsearch__.client.suggest(index: Chemical.index_name, body: {
-      suggests: {
-        text: term,
-        completion: {
-          field: 'suggest', size: 10
+  def self.suggest(query)
+    Chemical.__elasticsearch__.client.suggest(
+      index: Chemical.index_name,
+      body: {
+        suggestions: {
+          text: query,
+          completion: {
+            field: 'suggest_en', size: 10
+          }
         }
       }
-    })
+    )
   end
 
   def self.search(q, page = 1, page_size = 20)
@@ -108,6 +111,7 @@ class Chemical < ApplicationRecord
   def self.rebuild_es_data
     Chemical.__elasticsearch__.client.indices.create index: Chemical.index_name
     Chemical.import
+    # Chemical.__elasticsearch__.refresh_index!
   end
 
   # ----------- Connect Database Part -------------
