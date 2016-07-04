@@ -1,3 +1,139 @@
+分析器(analyzer) 包含分词器和过滤器(字符过滤器和标记过滤器)
+分词器将字符串分割成单独的词（terms）或者标记（tokens）
+{
+  "query": {
+    "bool": {
+      "must": {
+        "match": {
+          "content": {
+            "query": "full text search",
+            "operator": "and"
+          }
+        }
+      },
+      "should": [
+        {
+          "match": {
+            "content": "Elasticsearch",
+            "boost": 3
+          }
+        },
+        {
+          "match": {
+            "content": "Lucene"
+            "boost": 2
+          }
+        },
+        {
+          "match": {
+            "title": {
+              "query": "War and Peace",
+              "boost": 2 
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+{
+  "query": {
+    "bool": {
+      "must": {
+        "match": { "title": "quick" }
+      },
+      "must_not": {
+        "match": { "title": "lazy" }
+      },
+      "should": [
+        {
+          "match": { "title": "brown" }
+        },
+        {
+          "match": { "title": "dog" }
+        }
+      ],
+    }
+  }
+}
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "missing": {
+          "field": "tags"
+        }
+      }
+    }
+  }
+}
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "range": {
+          "price": {
+            "gte": 20,
+            "lt": 40
+          },
+          "timestamp": {
+            "gt": "now-1h"
+          }
+        }
+      }
+    }
+  }
+}
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_all": { }
+      },
+      "filter": {
+        "bool": {
+          "should": [
+            {
+              "term": { "productID": "XHDK-A-1293-#fJ3" }
+            },
+            {
+              "bool": {
+                "must": [
+                  {
+                    "term": { "productID": 'xxx' }
+                  },
+                  {
+                    "term": { "price": 30 }
+                  }
+                ]
+              }
+            }
+          ],
+          "must_not": {
+            "term": {
+              "price": 30
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+PUT /my_temp_index
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  }
+}
+
+PUT /my_temp_index/_settings
+{
+  "number_of_replicas": 1
+}
+
+
 这个是mapping {
   "tweet": {
     "type": "string",

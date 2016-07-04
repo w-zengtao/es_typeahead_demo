@@ -25,7 +25,7 @@ gem 'elasticsearch-model', git: 'git://github.com/elasticsearch/elasticsearch-ra
 gem 'elasticsearch-rails', git: 'git://github.com/elasticsearch/elasticsearch-rails.git'
 
 # elasticsearch searchkick
-gem 'searchkick'
+# gem 'searchkick'
 
 # Likeable
 gem 'acts_as_followable', git: 'git://github.com/w-zengtao/acts_as_followable.git'
@@ -43,6 +43,3 @@ group :development do
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
 end
-
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]

@@ -24,42 +24,44 @@ class Chemical < ApplicationRecord
   document_type 'chemicals'
 
   settings index: { number_of_shards: 1, number_of_replicas: 0 } do
-    mapping do
+    mappings do
       indexes :cas, type: 'string', index: "not_analyzed", analyzer: 'snowball'
-      # indexes :name, type: 'string', analyzer: 'snowball'
-      # indexes :alias_name, type: 'string', analyzer: 'snowball'
-      #
-      # indexes :name_cn, type: 'string', analyzer: 'ik_smart'
-      # indexes :alias_name_cn, type: 'string', analyzer: 'ik_smart'
-
       indexes :status, type: 'integer'
       indexes :names, type: 'string', analyzer: 'snowball'
-      indexes :suggest_en, type: 'completion', analyzer: 'snowball', payloads: true
+      indexes :keyword_suggest, type: 'completion',  payloads: true
     end
   end
 
   def as_indexed_json(options = {})
     {
       cas: self.cas.to_s.strip,
-      name: self.name.to_s.strip,
       names: self.suggests,
-      alias_name: self.name.to_s.strip,
       status: self.status.to_i,
-      suggest_en: {
+      keyword_suggest: {
         input: self.suggests
       }
     }.as_json
   end
 
-  # ES的Suggest功能
-  def self.suggest(query)
+  def suggests
+    s = []
+    s << self.cas
+    s << self.name.to_s.downcase.gsub(INVALID_UTF8_REGEX,'').gsub(WHITESPACE_REGEXP,' ').scan(/[a-z]+/).find_all{|i| i.size >= 2}.uniq
+    s << self.alias_name.to_s.downcase.gsub(INVALID_UTF8_REGEX,'').gsub(WHITESPACE_REGEXP,' ').scan(/[a-z]+/).find_all{|i| i.size >= 2}.uniq
+    s.flatten!
+    s.map! {|n| n.to_s.strip.downcase}
+    s.select! {|n| n.present?}
+    s.uniq
+  end
+
+  def self.typeahead(query)
     Chemical.__elasticsearch__.client.suggest(
       index: Chemical.index_name,
       body: {
         suggestions: {
           text: query,
           completion: {
-            field: 'suggest_en', size: 10
+            field: 'keyword_suggest'
           }
         }
       }
@@ -111,18 +113,8 @@ class Chemical < ApplicationRecord
   def self.rebuild_es_data
     Chemical.__elasticsearch__.client.indices.create index: Chemical.index_name
     Chemical.import
-    # Chemical.__elasticsearch__.refresh_index!
   end
 
   # ----------- Connect Database Part -------------
-  def suggests
-    s = []
-    s << self.cas
-    s << self.name.to_s.downcase.gsub(INVALID_UTF8_REGEX,'').gsub(WHITESPACE_REGEXP,' ').scan(/[a-z]+/).find_all{|i| i.size >= 2}.uniq
-    s << self.alias_name.to_s.downcase.gsub(INVALID_UTF8_REGEX,'').gsub(WHITESPACE_REGEXP,' ').scan(/[a-z]+/).find_all{|i| i.size >= 2}.uniq
-    s.flatten!
-    s.map! {|n| n.to_s.strip.downcase}
-    s.select! {|n| n.present?}
-    s.uniq
-  end
+
 end
